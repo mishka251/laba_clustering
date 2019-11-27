@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import skfuzzy as fuzz
 import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
@@ -9,14 +8,8 @@ from sklearn.metrics import silhouette_samples, silhouette_score, davies_bouldin
 from seaborn import scatterplot as scatter
 from yellowbrick.cluster import KElbowVisualizer
 
-from sklearn.cluster import DBSCAN
-from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE
-
 from pyclustering.cluster import cluster_visualizer
 from pyclustering.cluster.birch import birch
-from pyclustering.samples.definitions import FCPS_SAMPLES
-from pyclustering.utils import read_sample
 
 
 # ---------------- Метод локтя ------------------------------------------------------------------
@@ -99,14 +92,14 @@ def clustering2(data, n_clusters):
     return clusters
 
 
-def add_indexes(data, values):
-    indexes = {}
-    for name in values:
-        if name not in indexes:
-            indexes[name] = len(indexes)
-
-    data['res_indexes'] = list(map(lambda type: indexes[type], data['test_result']))
-
+# def add_indexes(data, values):
+#     indexes = {}
+#     for name in values:
+#         if name not in indexes:
+#             indexes[name] = len(indexes)
+#
+#     data['res_indexes'] = list(map(lambda type: indexes[type], data['test_result']))
+#
 
 def str_to_indexes(values):
     indexes = {}
@@ -123,15 +116,15 @@ def fuzzy(data, n_clusters):
     print("fuzzy")
     print(fcm.centers)
     print(fcm.u)
-    return fcm.u
-    # plot result
-    # % matplotlib
-    # inline
-    # f, axes = plt.subplots(1, 2, figsize=(11, 5))
-    # scatter(data[:, 0], data1[:, 1], ax=axes[0])
-    # scatter(X[:, 0], X[:, 1], ax=axes[1], hue=fcm_labels)
-    # scatter(fcm_centers[:, 0], fcm_centers[:, 1], ax=axes[1], marker="s", s=200)
-    # plt.show()
+
+    res = np.transpose(fcm.u)
+
+    for cl_num in range(n_clusters):
+        vals = res[cl_num]
+        plt.plot(range(len(vals)), vals, label=cl_num+1)
+    plt.show()
+    return res
+
 
 
 def calc_clusters_cnt(data):
@@ -143,7 +136,7 @@ def calc_clusters_cnt(data):
 def main():
     file_name = "bird.csv"
     birds, data = load_data(file_name)
-    calc_clusters_cnt(data)
+    #calc_clusters_cnt(data)
 
     clusters1 = clustering(data, n_clusters=5)
     clusters2 = clustering2(data, n_clusters=5)
@@ -156,7 +149,6 @@ def main():
     print(np.corrcoef(clusters1, clusters2))
     print(np.corrcoef(types_indexes, clusters2))
     print(np.corrcoef(clusters1, types_indexes))
-
 
 
 main()
