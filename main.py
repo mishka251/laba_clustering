@@ -21,6 +21,7 @@ def ElbowMethod(X):
     visualizer1.show()  # Finalize and render the figure
 
 
+# метод силуэта
 def silhouette_method(X):
     poss_n = range(2, 10)
     results = []
@@ -56,50 +57,38 @@ def load_data(file_name):
     return birds, data
 
 
+# кластеризация kmeans
 def clustering(data, n_clusters):
     scalar = StandardScaler()
     X = scalar.fit_transform(data)
     print(any(map(lambda row: any(map(lambda el: el is None or el is float("-inf") or el is float("inf"), row)), X)))
     km = KMeans(n_clusters=n_clusters)
 
-    # print(X)
-
     clusters = km.fit_predict(data)
     print("k-means")
     print(clusters)
     return clusters
-    # data['cluster'] = clusters
 
 
+# кластеризация
 def clustering2(data, n_clusters):
     data2 = data.to_numpy().tolist()
-    # print(data2)
-    # Create BIRCH algorithm to allocate three clusters.
+
     birch_instance = birch(data2, n_clusters)
-    # Run cluster analysis.
+
     birch_instance.process()
-    # Get allocated clusters.
-    print("birch")
+
     objects_in_clusters = birch_instance.get_clusters()
+    print("birch")
     print(objects_in_clusters)
     clusters = []
     for i in range(len(data2)):
         indexes = [i2 for i2, v in enumerate(objects_in_clusters) if v.count(i) > 0]
-        # print(indexes)
         clusters.append(indexes[0])
 
     print(clusters)
     return clusters
 
-
-# def add_indexes(data, values):
-#     indexes = {}
-#     for name in values:
-#         if name not in indexes:
-#             indexes[name] = len(indexes)
-#
-#     data['res_indexes'] = list(map(lambda type: indexes[type], data['test_result']))
-#
 
 def str_to_indexes(values):
     indexes = {}
@@ -110,6 +99,7 @@ def str_to_indexes(values):
     return list(map(lambda v: indexes[v], values))
 
 
+# нечеткая кластеризация
 def fuzzy(data, n_clusters):
     fcm = FCM(n_clusters)
     fcm.fit(data)
@@ -121,10 +111,9 @@ def fuzzy(data, n_clusters):
 
     for cl_num in range(n_clusters):
         vals = res[cl_num]
-        plt.plot(range(len(vals)), vals, label=cl_num+1)
+        plt.plot(range(len(vals)), vals, label=cl_num + 1)
     plt.show()
     return res
-
 
 
 def calc_clusters_cnt(data):
@@ -136,19 +125,29 @@ def calc_clusters_cnt(data):
 def main():
     file_name = "bird.csv"
     birds, data = load_data(file_name)
-    #calc_clusters_cnt(data)
+    calc_clusters_cnt(data)
 
-    clusters1 = clustering(data, n_clusters=5)
-    clusters2 = clustering2(data, n_clusters=5)
-    fuzzy_props = fuzzy(data, n_clusters=5)
-    # data['test_result'] = birds['type']
-    # add_indexes(data, birds['type'])
+    n_clusters = 5
+    clusters1 = clustering(data, n_clusters)
+    clusters2 = clustering2(data, n_clusters)
+    fuzzy_props = fuzzy(data, n_clusters)
 
-    # print(data)
     types_indexes = str_to_indexes(birds['type'])
-    print(np.corrcoef(clusters1, clusters2))
-    print(np.corrcoef(types_indexes, clusters2))
-    print(np.corrcoef(clusters1, types_indexes))
+    corr_c1_c2 = np.corrcoef(clusters1, clusters2)[0][1]
+    corr_res_c2 = np.corrcoef(types_indexes, clusters2)[0][1]
+    corr_c1_res = np.corrcoef(clusters1, types_indexes)[0][1]
+    print("Корреляция между кластеризациями = " + str(corr_c1_c2))
+    print("Корреляция между кластеразацией 2 и исходными = " + str(corr_res_c2))
+    print("Корреляция между кластеризацией1 и исхоными = " + str(corr_c1_res))
+
+    data['test_types'] = birds['type']
+    data['clusters1'] = clusters1
+    data['clusters2'] = clusters2
+
+    for i in range(n_clusters):
+        data['fuzzy_prop' + str(i + 1)] = fuzzy_props[i]
+
+    data.to_csv('result.csv')
 
 
 main()
