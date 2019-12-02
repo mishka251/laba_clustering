@@ -11,6 +11,7 @@ from yellowbrick.cluster import KElbowVisualizer
 from pyclustering.cluster import cluster_visualizer
 from pyclustering.cluster.birch import birch
 
+from math import fabs
 
 # ---------------- Метод локтя ------------------------------------------------------------------
 def ElbowMethod(X):
@@ -34,6 +35,7 @@ def silhouette_method(X):
     plt.show()
 
 
+# Метод Дависа-Болдуина
 def dbi(X):
     poss_n = range(2, 10)
     results = []
@@ -102,7 +104,7 @@ def str_to_indexes(values):
 # нечеткая кластеризация
 def fuzzy(data, n_clusters):
     fcm = FCM(n_clusters)
-    fcm.fit(data)
+    fcm.fit(data[['huml']])
     print("fuzzy")
     print(fcm.centers)
     print(fcm.u)
@@ -125,7 +127,7 @@ def calc_clusters_cnt(data):
 def main():
     file_name = "bird.csv"
     birds, data = load_data(file_name)
-    calc_clusters_cnt(data)
+    # calc_clusters_cnt(data)
 
     n_clusters = 5
     clusters1 = clustering(data, n_clusters)
@@ -136,16 +138,27 @@ def main():
     corr_c1_c2 = np.corrcoef(clusters1, clusters2)[0][1]
     corr_res_c2 = np.corrcoef(types_indexes, clusters2)[0][1]
     corr_c1_res = np.corrcoef(clusters1, types_indexes)[0][1]
-    print("Корреляция между кластеризациями = " + str(corr_c1_c2))
-    print("Корреляция между кластеразацией 2 и исходными = " + str(corr_res_c2))
-    print("Корреляция между кластеризацией1 и исхоными = " + str(corr_c1_res))
+    print("Корреляция между kmeans и birth = " + str(fabs(corr_c1_c2)))
+    print("Корреляция между birth и исходными = " + str(fabs(corr_res_c2)))
+    print("Корреляция между kmeans и исхоными = " + str(fabs(corr_c1_res)))
 
     data['test_types'] = birds['type']
     data['clusters1'] = clusters1
     data['clusters2'] = clusters2
 
+    plt.scatter(data.huml, data.humw, c=data.clusters1)
+    plt.show()
+    plt.scatter(data.huml, data.humw, c=data.clusters2)
+    plt.show()
     for i in range(n_clusters):
         data['fuzzy_prop' + str(i + 1)] = fuzzy_props[i]
+
+    data = data.sort_values(by=['clusters1'])
+
+    for i in range(n_clusters):
+        vals = data['fuzzy_prop' + str(i + 1)]
+        plt.plot(range(len(vals)), vals, label=i + 1)
+    plt.show()
 
     data.to_csv('result.csv')
 
