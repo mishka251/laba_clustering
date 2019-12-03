@@ -12,6 +12,7 @@ from pyclustering.cluster import cluster_visualizer
 from pyclustering.cluster.birch import birch
 
 from math import fabs
+import scipy
 
 # ---------------- Метод локтя ------------------------------------------------------------------
 def ElbowMethod(X):
@@ -53,8 +54,8 @@ def load_data(file_name):
     birds = pd.read_csv(file_name).dropna(axis=1, how='all')
     print(birds)
     birds = birds.dropna()
-    data = birds.drop('type', axis='columns')
-    data = data.drop('id', axis='columns')
+    data = birds.drop('target', axis='columns')
+    #data = data.drop('id', axis='columns')
 
     return birds, data
 
@@ -104,7 +105,7 @@ def str_to_indexes(values):
 # нечеткая кластеризация
 def fuzzy(data, n_clusters):
     fcm = FCM(n_clusters)
-    fcm.fit(data[['huml']])
+    fcm.fit(data[['oldpeak']])
     print("fuzzy")
     print(fcm.centers)
     print(fcm.u)
@@ -125,30 +126,30 @@ def calc_clusters_cnt(data):
 
 
 def main():
-    file_name = "bird.csv"
+    file_name = "heart.txt"
     birds, data = load_data(file_name)
-    # calc_clusters_cnt(data)
+    calc_clusters_cnt(data)
 
-    n_clusters = 5
+    n_clusters = 2
     clusters1 = clustering(data, n_clusters)
     clusters2 = clustering2(data, n_clusters)
     fuzzy_props = fuzzy(data, n_clusters)
 
-    types_indexes = str_to_indexes(birds['type'])
-    corr_c1_c2 = np.corrcoef(clusters1, clusters2)[0][1]
-    corr_res_c2 = np.corrcoef(types_indexes, clusters2)[0][1]
-    corr_c1_res = np.corrcoef(clusters1, types_indexes)[0][1]
+    types_indexes = str_to_indexes(birds['target'])
+    corr_c1_c2 = scipy.stats.spearmanr(clusters1, clusters2)[0]
+    corr_res_c2 = scipy.stats.spearmanr(types_indexes, clusters2)[0]
+    corr_c1_res = scipy.stats.spearmanr(clusters1, types_indexes)[0]
     print("Корреляция между kmeans и birth = " + str(fabs(corr_c1_c2)))
     print("Корреляция между birth и исходными = " + str(fabs(corr_res_c2)))
     print("Корреляция между kmeans и исхоными = " + str(fabs(corr_c1_res)))
 
-    data['test_types'] = birds['type']
+    data['test_types'] = birds['target']
     data['clusters1'] = clusters1
     data['clusters2'] = clusters2
 
-    plt.scatter(data.huml, data.humw, c=data.clusters1)
+    plt.scatter(data.sex, data.oldpeak, c=data.clusters1)
     plt.show()
-    plt.scatter(data.huml, data.humw, c=data.clusters2)
+    plt.scatter(data.sex, data.oldpeak, c=data.clusters2)
     plt.show()
     for i in range(n_clusters):
         data['fuzzy_prop' + str(i + 1)] = fuzzy_props[i]
